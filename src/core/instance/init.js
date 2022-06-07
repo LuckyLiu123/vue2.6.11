@@ -29,6 +29,7 @@ export function initMixin (Vue: Class<Component>) {
     // a flag to avoid this being observed
     vm._isVue = true
     // merge options
+    // 1. 选项合并: 用户选项和系统默认选项需要合并(有些组件不需要声明就可以用的，比如: keep-alive, transition, transition-group等)
     if (options && options._isComponent) {
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
@@ -48,13 +49,18 @@ export function initMixin (Vue: Class<Component>) {
       vm._renderProxy = vm
     }
     // expose real self
+    // 2. 初始化
     vm._self = vm
-    initLifecycle(vm)
-    initEvents(vm)
-    initRender(vm)
+    initLifecycle(vm)  // 和这个组件相关的声明周期的元素的初始化过程
+    initEvents(vm)  // 组件内自定义事件的监听
+    initRender(vm)  // 1. 插槽的处理；2. $createElement函数的声明($createElement就是render(h)中的h)
+    // 调用声明周期的钩子函数
     callHook(vm, 'beforeCreate')
+
+    // created 声明周期之前就是做组件数据和状态的初始化
+    // provide/inject(先inject注入，再provide)
     initInjections(vm) // resolve injections before data/props
-    initState(vm)
+    initState(vm)  // data/props/methods/computed/watch的初始化
     initProvide(vm) // resolve provide after data/props
     callHook(vm, 'created')
 
@@ -65,6 +71,8 @@ export function initMixin (Vue: Class<Component>) {
       measure(`vue ${vm._name} init`, startTag, endTag)
     }
 
+    // 执行挂载
+    // 如果用户设置了el选项的组件，会自动挂载
     if (vm.$options.el) {
       vm.$mount(vm.$options.el)
     }
