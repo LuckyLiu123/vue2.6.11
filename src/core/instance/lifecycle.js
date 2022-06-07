@@ -59,16 +59,19 @@ export function lifecycleMixin (Vue: Class<Component>) {
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     const vm: Component = this
     const prevEl = vm.$el
+    // 上次计算的虚拟dom, 初始化的时候没有
     const prevVnode = vm._vnode
     const restoreActiveInstance = setActiveInstance(vm)
     vm._vnode = vnode
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
+    // 初始化的时候没有prevVnode
     if (!prevVnode) {
       // initial render
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
-      // updates
+      // updates 更新周期的时候会不断的走这个逻辑
+      // diff
       vm.$el = vm.__patch__(prevVnode, vnode)
     }
     restoreActiveInstance()
@@ -138,6 +141,9 @@ export function lifecycleMixin (Vue: Class<Component>) {
   }
 }
 
+// 真正的挂载
+// 首次挂载的时候只做两件事：1. 声明组件更新函数updateComponent; 2. 声明一个和当前组件一一对应的watcher;
+// 在Vue2中，一个组件一个watcher
 export function mountComponent (
   vm: Component,
   el: ?Element,
@@ -164,8 +170,10 @@ export function mountComponent (
       }
     }
   }
+  // beforeMount生命周期之前不能做dom操作，因为还没有执行挂载
   callHook(vm, 'beforeMount')
 
+  // updateComponent 组件更新函数的声明
   let updateComponent
   /* istanbul ignore if */
   if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
@@ -187,6 +195,7 @@ export function mountComponent (
     }
   } else {
     updateComponent = () => {
+      // 首先执行render函数, 生成虚拟dom, 然后调用_update函数将虚拟dom生成真实的dom
       vm._update(vm._render(), hydrating)
     }
   }
