@@ -51,13 +51,13 @@ export function initMixin (Vue: Class<Component>) {
     // expose real self
     // 2. 初始化
     vm._self = vm
-    initLifecycle(vm)  // 和这个组件相关的声明周期的元素的初始化过程
+    initLifecycle(vm)  // 和这个组件相关的生命周期的元素的初始化过程
     initEvents(vm)  // 组件内自定义事件的监听
     initRender(vm)  // 1. 插槽的处理；2. $createElement函数的声明($createElement就是render(h)中的h)
     // 调用声明周期的钩子函数
     callHook(vm, 'beforeCreate')
 
-    // created 声明周期之前就是做组件数据和状态的初始化
+    // created 生命周期之前就是做组件数据和状态的初始化
     // provide/inject(先inject注入，再provide)
     initInjections(vm) // resolve injections before data/props
     initState(vm)  // data/props/methods/computed/watch的初始化

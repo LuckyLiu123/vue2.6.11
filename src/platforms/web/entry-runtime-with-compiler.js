@@ -76,7 +76,7 @@ Vue.prototype.$mount = function (
         comments: options.comments
       }, this)
 
-      // 获得渲染函数赋值给选项，将来使用
+      // 获得渲染函数赋值给选项，将来使用(当组件的更新函数准备调用的时候，就会调这个render函数，会得到一个虚拟dom)
       options.render = render
       options.staticRenderFns = staticRenderFns
 

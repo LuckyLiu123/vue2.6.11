@@ -41,13 +41,18 @@ export class Observer {
 
   constructor (value: any) {
     this.value = value
+    // 2. 此处的dep的目的是什么?
     this.dep = new Dep()
     this.vmCount = 0
     def(value, '__ob__', this)
+
+    // 1. 分辨传入的对象类型
     if (Array.isArray(value)) {
+      // 现代浏览器，覆盖原型(覆盖数组的那7个方法)
       if (hasProto) {
         protoAugment(value, arrayMethods)
       } else {
+        // 老IE浏览器
         copyAugment(value, arrayMethods, arrayKeys)
       }
       this.observeArray(value)
@@ -86,6 +91,10 @@ export class Observer {
  */
 function protoAugment (target, src: Object) {
   /* eslint-disable no-proto */
+  // 一个对象的实例，如何去覆盖它的原型
+  // 直接覆盖__proto__这个属性就行了，可以完全替换它的原型对象，将来在执行方法的时候会按照src里面的属性和方法来执行
+  // 覆盖当前数组实例的原型
+  // 它只会影响当前数组实例本身
   target.__proto__ = src
   /* eslint-enable no-proto */
 }
@@ -111,7 +120,10 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
   if (!isObject(value) || value instanceof VNode) {
     return
   }
+
+  // Observer 的作用是什么
   let ob: Observer | void
+  // 如果已经做过响应式处理，则直接返回ob
   if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
     ob = value.__ob__
   } else if (
@@ -121,6 +133,7 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
     Object.isExtensible(value) &&
     !value._isVue
   ) {
+    // 初始化传入需要响应式的对象
     ob = new Observer(value)
   }
   if (asRootData && ob) {
@@ -139,6 +152,7 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
+  // 创建和key一一对应的dep
   const dep = new Dep()
 
   const property = Object.getOwnPropertyDescriptor(obj, key)
@@ -153,16 +167,29 @@ export function defineReactive (
     val = obj[key]
   }
 
+  // 递归遍历
+  // observe(val)会将创建的observe的实例返回过来，如果那个对象是一个响应式对象，就把那个__ob__直接return出来。
+  // 如果是一个新对象，就创建一个新的Observe实例并返回出来。
   let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
+      // 如果Dep.target存在，说明此次调用触发者是一个Watcher实例
+      // 在组件级的Watcher里面，一个组件对应一个Watcher，但是一个组件里面的dep可以有多个，也就是依赖的key有多个，所以一个Watcher对应了多个dep，这是1 : n的关系。
+      // 但是反过来，除了组件级的Watcher之外，还有用户级的Watcher，比如用户写了watcher选项，或者调用了$watch()方法。这些API会额外的创建Watcher，
+      // 所以Watcher的数量也不止一个。所以实际上Watcher和key之间是n : n的关系。
+      // dep和watcher是 n : n 的关系
       if (Dep.target) {
+        // 依赖关系是相互创建的过程
+        // 建立dep和Dep.target之间的依赖关系(所有这些key相对应的dep要和Dep.target之间建立关系)
         dep.depend()
         if (childOb) {
+          // 当前对象childOb中的dep(也就是ob内部的dep)也要和Dep.target之间建立关系
           childOb.dep.depend()
+          // 如果是数组，数组内部所有项都要做相同的处理
+          // 这样的过程非常繁琐，性能不是特别的好!!!(Vue3专门解决过这个问题)
           if (Array.isArray(value)) {
             dependArray(value)
           }
