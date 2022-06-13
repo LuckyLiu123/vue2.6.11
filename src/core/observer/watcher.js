@@ -42,6 +42,7 @@ export default class Watcher {
   getter: Function;
   value: any;
 
+  // mount => mountComponent => updateComponent + new Watcher(vm, updateComponent)
   constructor (
     vm: Component,
     expOrFn: string | Function,
@@ -77,6 +78,7 @@ export default class Watcher {
       : ''
     // parse expression for getter
     if (typeof expOrFn === 'function') {
+      // 如果expOrFn是函数，则表示它是一个组件更新函数
       this.getter = expOrFn
     } else {
       this.getter = parsePath(expOrFn)
@@ -166,11 +168,13 @@ export default class Watcher {
    */
   update () {
     /* istanbul ignore else */
-    if (this.lazy) {
+    if (this.lazy) {  // computed 计算属性会用到
       this.dirty = true
     } else if (this.sync) {
+      // watch: {this.sync: true}
       this.run()
     } else {
+      // 正常情况下走这里 watcher入队
       queueWatcher(this)
     }
   }
@@ -181,7 +185,10 @@ export default class Watcher {
    */
   run () {
     if (this.active) {
+      // 组件(render)的watcher
       const value = this.get()
+      // 用户watcher会走这里
+      // 比如 watch/this.$watch('foo', cb) cb会走这里
       if (
         value !== this.value ||
         // Deep watchers and watchers on Object/Arrays should fire even

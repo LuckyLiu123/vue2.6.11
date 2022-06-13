@@ -10,6 +10,7 @@ export let isUsingMicroTask = false
 const callbacks = []
 let pending = false
 
+// 对callbacks进行循环遍历，并执行里面的任务
 function flushCallbacks () {
   pending = false
   const copies = callbacks.slice(0)
@@ -41,6 +42,7 @@ let timerFunc
 /* istanbul ignore next, $flow-disable-line */
 if (typeof Promise !== 'undefined' && isNative(Promise)) {
   const p = Promise.resolve()
+  // 平台如果支持Promise，timerFunc就使用Promise
   timerFunc = () => {
     p.then(flushCallbacks)
     // In problematic UIWebViews, Promise.then doesn't completely break, but
@@ -65,6 +67,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
   observer.observe(textNode, {
     characterData: true
   })
+  // 如果平台不支持Promise，就判断MutationObserver，支持就使用MutationObserver
   timerFunc = () => {
     counter = (counter + 1) % 2
     textNode.data = String(counter)
@@ -79,6 +82,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
   }
 } else {
   // Fallback to setTimeout.
+  // 最后还不支持就使用setTimeout(已经变成宏任务了)
   timerFunc = () => {
     setTimeout(flushCallbacks, 0)
   }
@@ -86,6 +90,8 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
 
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
+  // 对cb回调函数的封装，cb不会立即执行
+  // 封装一个能够处理错误的高阶函数，并将它存入callbacks的数组中
   callbacks.push(() => {
     if (cb) {
       try {
@@ -97,7 +103,9 @@ export function nextTick (cb?: Function, ctx?: Object) {
       _resolve(ctx)
     }
   })
+  // 该代码只会执行一次
   if (!pending) {
+    // 异步启动执行
     pending = true
     timerFunc()
   }
