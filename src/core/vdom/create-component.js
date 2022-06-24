@@ -33,7 +33,9 @@ import {
 } from 'weex/runtime/recycle-list/render-component-template'
 
 // inline hooks to be invoked on component VNodes during patch
+// 组件的虚拟dom的钩子，在patch()的时候会调用它们
 const componentVNodeHooks = {
+  // init 表示组件的初始化
   init (vnode: VNodeWithData, hydrating: boolean): ?boolean {
     if (
       vnode.componentInstance &&
@@ -44,10 +46,19 @@ const componentVNodeHooks = {
       const mountedNode: any = vnode // work around flow
       componentVNodeHooks.prepatch(mountedNode, mountedNode)
     } else {
+      // 创建组件的实例，首先获取构造函数
+      // 从vnode中将构造函数拿出来
       const child = vnode.componentInstance = createComponentInstanceForVnode(
         vnode,
         activeInstance
       )
+
+      // 组件的挂载
+      // 递归的过程
+      // Parent created
+      //   Child created 
+      //   Child mounted 
+      // Parent mounted 
       child.$mount(hydrating ? vnode.elm : undefined, hydrating)
     }
   },
@@ -112,7 +123,10 @@ export function createComponent (
   const baseCtor = context.$options._base
 
   // plain options object: turn it into a constructor
+  // 标准化处理
+  // 如果传入的数据不是字符串的时候
   if (isObject(Ctor)) {
+    // 还需要extend一下，得到构造函数
     Ctor = baseCtor.extend(Ctor)
   }
 
@@ -126,6 +140,7 @@ export function createComponent (
   }
 
   // async component
+  // 异步组件
   let asyncFactory
   if (isUndef(Ctor.cid)) {
     asyncFactory = Ctor
@@ -151,6 +166,7 @@ export function createComponent (
   resolveConstructorOptions(Ctor)
 
   // transform component v-model data into props & events
+  // v-model特殊处理
   if (isDef(data.model)) {
     transformModel(Ctor.options, data)
   }
@@ -170,6 +186,7 @@ export function createComponent (
   // so it gets processed during parent component patch.
   data.on = data.nativeOn
 
+  // 抽象组件(没有页面，只做通用业务逻辑)
   if (isTrue(Ctor.options.abstract)) {
     // abstract components do not keep anything
     // other than props & listeners & slot
@@ -183,6 +200,7 @@ export function createComponent (
   }
 
   // install component management hooks onto the placeholder node
+  // 安装组件的钩子
   installComponentHooks(data)
 
   // return a placeholder vnode

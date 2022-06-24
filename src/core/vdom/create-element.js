@@ -44,6 +44,9 @@ export function createElement (
   return _createElement(context, tag, data, children, normalizationType)
 }
 
+// 创建节点虚拟dom
+// 1. 原生标签 div
+// 2. 自定义组件 comp
 export function _createElement (
   context: Component,
   tag?: string | Class<Component> | Function | Object,
@@ -92,10 +95,14 @@ export function _createElement (
   } else if (normalizationType === SIMPLE_NORMALIZE) {
     children = simpleNormalizeChildren(children)
   }
+
+
   let vnode, ns
+  // 一般情况下tag为字符串
   if (typeof tag === 'string') {
     let Ctor
     ns = (context.$vnode && context.$vnode.ns) || config.getTagNamespace(tag)
+    // 如果是保留标签
     if (config.isReservedTag(tag)) {
       // platform built-in elements
       if (process.env.NODE_ENV !== 'production' && isDef(data) && isDef(data.nativeOn)) {
@@ -104,6 +111,7 @@ export function _createElement (
           context
         )
       }
+      // 直接创建vnode
       vnode = new VNode(
         config.parsePlatformTagName(tag), data, children,
         undefined, undefined, context

@@ -130,6 +130,7 @@ export function createPatchFunction (backend) {
 
   let creatingElmInVPre = 0
 
+  // 传入一个vdom，创建对应的真实dom
   function createElm (
     vnode,
     insertedVnodeQueue,
@@ -149,10 +150,13 @@ export function createPatchFunction (backend) {
     }
 
     vnode.isRootInsert = !nested // for transition enter check
+    // 判断传入的vnode是否是自定义组件
+    // 是自定义组件则直接创建(createComponent())并return出去了
     if (createComponent(vnode, insertedVnodeQueue, parentElm, refElm)) {
       return
     }
 
+    // 保留标签的创建过程
     const data = vnode.data
     const children = vnode.children
     const tag = vnode.tag
@@ -171,6 +175,7 @@ export function createPatchFunction (backend) {
         }
       }
 
+      // vnode.elm 虚拟vdom需要保存真实节点，因为在做diff算法的时候需要用到这个elm
       vnode.elm = vnode.ns
         ? nodeOps.createElementNS(vnode.ns, tag)
         : nodeOps.createElement(tag, vnode)
@@ -196,6 +201,7 @@ export function createPatchFunction (backend) {
           insert(parentElm, vnode.elm, refElm)
         }
       } else {
+        // 里面有children，需要向下递归
         createChildren(vnode, children, insertedVnodeQueue)
         if (isDef(data)) {
           invokeCreateHooks(vnode, insertedVnodeQueue)
@@ -215,6 +221,8 @@ export function createPatchFunction (backend) {
     }
   }
 
+  // 如果是自定义组件，执行它的组件vnode的钩子
+  // 在这里调init方法，执行组件的实例化
   function createComponent (vnode, insertedVnodeQueue, parentElm, refElm) {
     let i = vnode.data
     if (isDef(i)) {
@@ -799,6 +807,8 @@ export function createPatchFunction (backend) {
 
         // create new node
         // 创建整棵树，将它追加到body的里面，parentElm的旁边
+        // 一次递归创建的过程，将vdom转换成真实的dom
+        // 初始化
         createElm(
           vnode,
           insertedVnodeQueue,
